@@ -5,6 +5,8 @@
 # physical form, so that Git Bash's D:/... vs /d/... (or any equivalent
 # non-canonical path) does not block every governed Bash command.
 set -u
+# shellcheck source=/dev/null
+. "$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/_test-session-isolation.sh"
 HOOKS="$(cd "$(dirname "$0")/.." && pwd)"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
