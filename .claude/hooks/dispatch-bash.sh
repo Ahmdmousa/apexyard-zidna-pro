@@ -237,7 +237,8 @@ for script in \
   block-forged-menu-approval.sh; do
   case "$script" in
     # Ticket-first fails closed (me2resh/apexyard#1623).
-    block-protected-target-writes.sh|require-active-ticket.sh|block-protected-ref-api.sh) run_fail_closed_hook "$script" ;;
+    block-protected-target-writes.sh|require-active-ticket.sh) run_fail_closed_hook "$script" ;;
+    block-protected-ref-api.sh) run_fail_closed_hook "$script" ;;
     # Menu-record forgery guard fails closed too (AgDR-0234). A crash must
     # not let a Bash write of approval_channel=menu through unchecked.
     block-forged-menu-approval.sh) run_fail_closed_hook "$script" ;;
