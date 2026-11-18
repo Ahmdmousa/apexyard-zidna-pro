@@ -45,3 +45,5 @@ MSG
 fi
 
 exit 0
+
+# ENF-14 test line (throwaway).
