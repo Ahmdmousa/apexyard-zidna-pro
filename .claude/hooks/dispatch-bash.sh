@@ -93,7 +93,8 @@ run_hook() {
   # suppress a later safety or merge gate.
   case "$script" in
     block-main-push.sh)
-      if APEXYARD_OPS_SCOPE_GUARD=1 "$HOOK_DIR/$script" <<<"$INPUT"; then :; else rc=$?; fi
+      # Local customisation (ADR-0054, #4): no APEXYARD_OPS_SCOPE_GUARD, so managed clones are covered too.
+      if "$HOOK_DIR/$script" <<<"$INPUT"; then :; else rc=$?; fi
       ;;
     block-reviewer-repo-mutation.sh|block-reviewer-ci-wait.sh)
       if APEXYARD_REVIEW_OPS_ROOT="$(cd "$HOOK_DIR/../.." && pwd -P)" "$HOOK_DIR/$script" <<<"$INPUT"; then :; else rc=$?; fi
@@ -163,6 +164,7 @@ fi
 # APEXYARD_DISPATCH_GATE: Bash|*|block-protected-target-writes.sh
 # APEXYARD_DISPATCH_GATE: Bash|*|block-ambient-tracker-repo.sh
 # APEXYARD_DISPATCH_GATE: Bash|*|block-privileged-escalation.sh
+# APEXYARD_DISPATCH_GATE: Bash|*|block-protected-ref-api.sh
 # APEXYARD_DISPATCH_GATE: Bash|*|require-skill-for-issue-create.sh
 # APEXYARD_DISPATCH_GATE: Bash|*|require-orbit-slice-for-ticket.sh
 # APEXYARD_DISPATCH_GATE: Bash|*|require-migration-ticket.sh
@@ -223,6 +225,7 @@ for script in \
   block-protected-target-writes.sh \
   block-ambient-tracker-repo.sh \
   block-privileged-escalation.sh \
+  block-protected-ref-api.sh \
   require-skill-for-issue-create.sh \
   require-orbit-slice-for-ticket.sh \
   require-migration-ticket.sh \
@@ -234,7 +237,7 @@ for script in \
   block-forged-menu-approval.sh; do
   case "$script" in
     # Ticket-first fails closed (me2resh/apexyard#1623).
-    block-protected-target-writes.sh|require-active-ticket.sh) run_fail_closed_hook "$script" ;;
+    block-protected-target-writes.sh|require-active-ticket.sh|block-protected-ref-api.sh) run_fail_closed_hook "$script" ;;
     # Menu-record forgery guard fails closed too (AgDR-0234). A crash must
     # not let a Bash write of approval_channel=menu through unchecked.
     block-forged-menu-approval.sh) run_fail_closed_hook "$script" ;;
