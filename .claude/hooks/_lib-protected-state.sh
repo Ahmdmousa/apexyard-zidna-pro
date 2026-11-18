@@ -107,6 +107,10 @@ pt_protected_form_nocase() {
 }
 pt_protected() {
   local p="$1" role="${2:-0}" physical lexical alt
+  # Local customisation (#11): Claude Code on Windows sends drive-letter paths
+  # (D:\work\...). Map them to the POSIX form first, or they look relative,
+  # get prefixed with the cwd and match no protected path.
+  p=$(_windows_path_to_posix "$p")
   case "$p" in
     /*) ;;
     *)
