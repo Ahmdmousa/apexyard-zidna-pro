@@ -62,8 +62,15 @@ pt_init() {
   if [ -e "$PT_SNAPSHOT" ]; then
     export PT_HAS_SNAPSHOT=1
     jq -e '(.ops_root|type=="string") and (.project_dir|type=="string") and (.settings|type=="object")' "$PT_SNAPSHOT" >/dev/null || return 2
-    [ "$PT_OPS" = "$(jq -r '.ops_root' "$PT_SNAPSHOT")" ] || return 2
-    PT_PROJECT=$(jq -r '.project_dir' "$PT_SNAPSHOT")
+    # Local customisation: compare and store snapshot paths in the same
+    # physical form as the pin. On Git Bash the snapshot holds D:/... while
+    # pt_physical yields /d/..., so a raw comparison always failed.
+    local snap_ops snap_project
+    snap_ops=$(jq -r '.ops_root' "$PT_SNAPSHOT")
+    snap_project=$(jq -r '.project_dir' "$PT_SNAPSHOT")
+    if [ -n "$snap_ops" ]; then snap_ops=$(pt_physical "$snap_ops") || return 2; fi
+    [ "$PT_OPS" = "$snap_ops" ] || return 2
+    if [ -n "$snap_project" ]; then PT_PROJECT=$(pt_physical "$snap_project") || return 2; fi
   else
     project=${CLAUDE_PROJECT_DIR:-}
     [ -z "$project" ] || PT_PROJECT=$(pt_physical "$project") || return 2
