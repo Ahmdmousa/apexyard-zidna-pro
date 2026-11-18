@@ -92,6 +92,7 @@ setup_dispatch_sandbox() {
     warn-isolated-build-risk.sh block-reviewer-repo-mutation.sh \
     block-reviewer-ci-wait.sh block-forged-menu-approval.sh \
     block-git-add-all.sh block-main-push.sh validate-branch-name.sh \
+    block-protected-ref-api.sh \
     pre-push-gate.sh block-agent-routing-drift.sh check-secrets.sh \
     block-onboarding-in-git.sh verify-commit-refs.sh validate-commit-format.sh \
     require-agdr-for-arch-changes.sh warn-bootstrap-scope.sh \
