@@ -42,6 +42,9 @@ expect 2 'git -c "core.hooksPath=/dev/null" commit -m x'
 expect 2 'git config core.hooksPath /tmp/empty'
 expect 2 'git config --unset core.hooksPath'
 expect 2 'git config --local core.hooksPath .githooks-off'
+expect 2 'git config --unset-all core.hooksPath'
+expect 2 'git config --replace-all core.hooksPath /tmp/x'
+expect 2 'git -C /d/work/x config core.hooksPath /tmp/empty'
 
 # Allowed: reads and unrelated calls.
 expect 0 'gh api repos/o/r/git/refs/heads/main'
@@ -52,6 +55,10 @@ expect 0 'gh api repos/o/r/pulls/7 --jq .head.sha'
 expect 0 'gh api graphql -f query="query { viewer { login } }"'
 expect 0 'gh api -X POST repos/o/r/issues/3/comments -f body=hi'
 expect 0 'git config --get core.hooksPath'
+# #16: a plain read (no value, no mutating option) is allowed.
+expect 0 'git config core.hooksPath'
+expect 0 'git config --local core.hooksPath'
+expect 0 'git -C /d/work/x config --show-origin core.hooksPath'
 expect 0 'git config user.name ahmdgit'
 expect 0 'git push origin feature/GH-4-x'
 
