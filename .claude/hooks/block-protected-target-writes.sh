@@ -31,7 +31,9 @@ cwd="$PT_CWD"
 pt_token() { pt_nocase pt_token_nocase "$@"; }
 pt_token_nocase() {
   local text="$1" token
-  text=$(printf '%s' "$text" | sed -e 's://*:/:g' -e 's:/\./:/:g')
+  # Local customisation (#11): treat backslashes as path separators, so a
+  # Windows-style operand (.claude\settings.json) still matches.
+  text=$(printf '%s' "$text" | tr '\\' '/' | sed -e 's://*:/:g' -e 's:/\./:/:g')
   for token in '.claude/settings.local.json' '.claude/settings.json' '.claude/hooks' "$PT_PIN_DIR/resolve-cache-" "$PT_PIN_DIR/projctx" '.claude/apexyard/resolve-cache-' '.claude/apexyard/projctx' APEXYARD_OPS_PIN_DIR ops-root- gate-session- CLAUDE_CONFIG_DIR CLAUDE_ENV_FILE session-env/ shell-snapshots/; do
     case "$text" in *"$token"*) return 0 ;; esac
   done
