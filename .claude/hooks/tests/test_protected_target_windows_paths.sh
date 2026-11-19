@@ -35,13 +35,15 @@ expect() {
 
 expect 2 "Edit settings.json (POSIX path)" "$(gate "$(edit "$OPS/.claude/settings.json")")"
 expect 0 "Edit an ordinary file (POSIX path)" "$(gate "$(edit "$OPS/src/app.ts")")"
-expect 2 "Bash cp to quoted backslash settings path" "$(gate "$(bashc "cp x '.claude\\settings.json'")")"
-expect 2 "Bash redirect to quoted backslash hook path" "$(gate "$(bashc 'echo x > ".claude\\hooks\\x.sh"')")"
 expect 0 "Bash git status" "$(gate "$(bashc 'git status')")"
 
 if command -v cygpath >/dev/null 2>&1; then
   WIN_BS="$(cygpath -w "$OPS")"
   WIN_FS="$(cygpath -m "$OPS")"
+  # Git Bash treats a backslash as a path separator. On Linux it is an
+  # ordinary file-name character, so these two cases apply to Windows only.
+  expect 2 "Bash cp to quoted backslash settings path" "$(gate "$(bashc "cp x '.claude\\settings.json'")")"
+  expect 2 "Bash redirect to quoted backslash hook path" "$(gate "$(bashc 'echo x > ".claude\\hooks\\x.sh"')")"
   expect 2 "Edit settings.json (D:\\ form)" "$(gate "$(edit "$WIN_BS\\.claude\\settings.json")")"
   expect 2 "Edit a hook (D:/ form)" "$(gate "$(edit "$WIN_FS/.claude/hooks/x.sh")")"
   expect 0 "Edit an ordinary file (D:\\ form)" "$(gate "$(edit "$WIN_BS\\src\\app.ts")")"
