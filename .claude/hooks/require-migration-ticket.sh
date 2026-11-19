@@ -104,6 +104,13 @@ TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty' 2>/dev/null)
 # made sound. Relative targets are resolved against the hook process's actual
 # cwd by the shared resolver; the payload `.cwd` remains advisory and unused.
 FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // .tool_input.path // empty' 2>/dev/null)
+# Local customisation (#13): Claude Code on Windows sends drive-letter paths
+# (D:\work\...). Unconverted, they look relative, get joined onto the cwd and
+# miss the clone's ticket marker, so every migration write is blocked as
+# "no active ticket" even under a correctly labelled ticket.
+if [ -n "$FILE_PATH" ] && declare -F _windows_path_to_posix >/dev/null 2>&1; then
+  FILE_PATH=$(_windows_path_to_posix "$FILE_PATH")
+fi
 
 # Bash-tool path: if the command writes, collect ALL extractable targets so
 # every one can be checked against the migration-path matcher below — not
@@ -221,6 +228,9 @@ if [ -f "$PCONFIG" ] && command -v jq >/dev/null 2>&1; then
   label=$(jq -r '.migration_label // empty' "$PCONFIG" 2>/dev/null)
   [ -n "$label" ] && MIGRATION_LABEL="$label"
   CUSTOM_PATHS=$(jq -r '.migration_paths // [] | join("\n")' "$PCONFIG" 2>/dev/null)
+  # Local customisation (#13): a native Windows jq.exe prints CRLF, so every
+  # pattern ended in \r and none could match. Strip carriage returns.
+  CUSTOM_PATHS=${CUSTOM_PATHS//$'\r'/}
 fi
 
 # --------- Does this path look like a migration? ---------
@@ -256,8 +266,19 @@ is_migration_path() {
 
   # Project-configured patterns take precedence if any
   if [ -n "$CUSTOM_PATHS" ]; then
+    # Local customisation (#13): Write/Edit send absolute paths, so a
+    # repo-relative pattern such as db/migrations/** never matched and the
+    # gate allowed the write. Also match */<pattern> against the path with
+    # backslashes turned into /. Over-matching a nested folder of the same
+    # name errs toward blocking.
+    local slashed
+    slashed=$(printf '%s' "$path" | tr '\\' '/')
     while IFS= read -r pat; do
       [ -z "$pat" ] && continue
+      # shellcheck disable=SC2254
+      case "$slashed" in
+        */$pat) return 0 ;;
+      esac
       # SC2254: unquoted expansion is intentional — the project-configured
       # pattern should be interpreted as a glob, not compared literally.
       # shellcheck disable=SC2254

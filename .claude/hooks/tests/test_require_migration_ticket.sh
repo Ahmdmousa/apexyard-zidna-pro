@@ -1747,6 +1747,28 @@ for c in \
 done
 rm -rf "$SB"
 
+# --- Local customisation (#13): Write/Edit with ABSOLUTE paths and ----------
+# --- adopter-configured migration_paths. -----------------------------------
+# Write and Edit send absolute paths. Before #13 a repo-relative custom pattern
+# (db/migrations/**) never matched them, so the write was allowed even under a
+# ticket without the migration label (found by ENF-02).
+SB=$(make_fork)
+printf '{ "migration_paths": ["src/db/**", "db/migrations/**"] }\n' > "$SB/.claude/project-config.json"
+mkdir -p "$SB/workspace/example/db/migrations"
+set_marker "$SB" "test-org/test-repo" 42
+install_mock "$SB" gh 'echo "{\"state\":\"OPEN\",\"labels\":[],\"body\":\"\"}"'
+if run_hook "$SB" "$SB/workspace/example/db/migrations/001.sql" 2; then
+  record_pass "#13 Write to absolute custom migration path, no label -> blocks"
+else
+  record_fail "#13 Write to absolute custom migration path, no label -> blocks"
+fi
+if run_hook "$SB" "$SB/workspace/example/src/app.ts" 0; then
+  record_pass "#13 Write to absolute non-migration path with custom patterns -> allows"
+else
+  record_fail "#13 Write to absolute non-migration path with custom patterns -> allows"
+fi
+rm -rf "$SB"
+
 # =============================================================================
 # Summary
 # =============================================================================
