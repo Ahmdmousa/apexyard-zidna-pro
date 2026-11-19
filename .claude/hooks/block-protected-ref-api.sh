@@ -53,7 +53,10 @@ if printf '%s' "$LC" | grep -qE 'git[^;&|]*[[:space:]]-c[[:space:]]*["'"'"']?cor
   block "overriding core.hooksPath for a git command is not available to agents."
 fi
 if printf '%s' "$LC" | grep -qE 'git[^;&|]*[[:space:]]config[^;&|]*core\.hookspath'; then
-  if ! printf '%s' "$LC" | grep -qE 'git[^;&|]*[[:space:]]config[[:space:]]+(--get|--get-all|-l|--list)[^;&|]*core\.hookspath' ||
+  # Reading is fine (`git config core.hooksPath`, `--get`, `--list`, scope
+  # flags such as --local). Block a change: a value after the key, or a
+  # mutating option (#16: the plain read used to be blocked as a change).
+  if printf '%s' "$LC" | grep -qE 'git[^;&|]*[[:space:]]config[^;&|]*[[:space:]](--unset|--unset-all|--replace-all|--add|--edit|-e|--remove-section|--rename-section)([[:space:]=]|$)' ||
      printf '%s' "$LC" | grep -qE 'core\.hookspath[[:space:]]+[^;&|[:space:]]'; then
     block "changing core.hooksPath is not available to agents."
   fi
